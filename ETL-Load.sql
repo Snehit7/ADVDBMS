@@ -1,7 +1,6 @@
--- -- DATA INTEGRATION SCRIPT (Task 3.1 Extended) -- Load to Star Schema
+-- -- DATA INTEGRATION SCRIPT extended 
 -- SET SERVEROUTPUT ON;
-
--- 1. Drop DIM and FACT tables if already exist
+--loading
 BEGIN 
     EXECUTE IMMEDIATE 'DROP TABLE FACT_CRIME CASCADE CONSTRAINTS'; 
 EXCEPTION 
@@ -42,7 +41,6 @@ EXCEPTION
 END; 
 /
 
--- 2. Create DIM_DATE
 CREATE TABLE DIM_DATE (
     DATE_KEY NUMBER PRIMARY KEY,
     FULL_DATE DATE,
@@ -53,28 +51,24 @@ CREATE TABLE DIM_DATE (
 );
 /
 
--- 3. Create DIM_LOCATION
 CREATE TABLE DIM_LOCATION (
     LOCATION_KEY NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     LOCATION_NAME VARCHAR2(100) UNIQUE
 );
 /
 
--- 4. Create DIM_CRIME_TYPE
 CREATE TABLE DIM_CRIME_TYPE (
     CRIME_TYPE_KEY NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     CRIME_TYPE VARCHAR2(200) UNIQUE
 );
 /
 
--- 5. Create DIM_POLICE_STATION
 CREATE TABLE DIM_POLICE_STATION (
     PS_KEY NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     PS_NAME VARCHAR2(200) UNIQUE
 );
 /
 
--- 6. Create FACT_CRIME
 CREATE TABLE FACT_CRIME (
     FACT_KEY NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     DATE_KEY NUMBER,
@@ -93,7 +87,7 @@ CREATE TABLE FACT_CRIME (
 );
 /
 
--- 7. Loading Procedure: Clean, Transform, and Load Good Data to Star Schema
+Loading Procedure: Clean, Transform, and Load Good Data to Star Schema
 DECLARE
     -- Cursor for GOOD data only
     CURSOR c_good IS
@@ -132,12 +126,11 @@ BEGIN
         v_error_flag := FALSE;
         
         ----------------------------------------------------------
-        -- 1. Handle Date (CRIME_DATE or LEDS_MONTH)
+        Handle Date
         ----------------------------------------------------------
         IF r.crime_date IS NOT NULL THEN
             v_crime_date := r.crime_date;
         ELSIF r.leds_month IS NOT NULL THEN
-            -- Assume LEDS_MONTH format 'YYYY-MM', set to first of month
             BEGIN
                 v_crime_date := TO_DATE(r.leds_month || '-01', 'YYYY-MM-DD');
             EXCEPTION
@@ -153,7 +146,7 @@ BEGIN
         IF v_error_flag THEN CONTINUE; END IF;
         
         ----------------------------------------------------------
-        -- 2. CLEAN POSTCODE / LOCATION (uppercase + trimmed)
+        -- CLEAN POSTCODE / LOCATION (uppercase + trimmed)
         ----------------------------------------------------------
         IF r.source_system IN ('PRCS', 'PS_WALES') THEN
             v_postcode := UPPER(TRIM(r.postcode));
@@ -169,7 +162,7 @@ BEGIN
         END IF;
         
         ----------------------------------------------------------
-        -- 3. CLEAN CRIME TYPE (Initcap + trimmed)
+        --CLEAN CRIME TYPE (Initcap + trimmed)
         ----------------------------------------------------------
         IF r.crime_type IS NOT NULL THEN
             v_crime_type := INITCAP(TRIM(r.crime_type));
@@ -180,7 +173,7 @@ BEGIN
         END IF;
         
         ----------------------------------------------------------
-        -- 4. CLEAN POLICE STATION NAME (if exists)
+        -- CLEAN POLICE STATION NAME (if exists)
         ----------------------------------------------------------
         IF r.station_id IS NOT NULL THEN
             v_ps_name := INITCAP(TRIM(TO_CHAR(r.station_id)));
@@ -195,7 +188,7 @@ BEGIN
         END IF;
         
         ----------------------------------------------------------
-        -- 5. GENERATE DATE_KEY (YYYYMMDD) and Components
+        --  GENERATE DATE_KEY (YYYYMMDD) and Components
         ----------------------------------------------------------
         v_date_key := TO_NUMBER(TO_CHAR(v_crime_date, 'YYYYMMDD'));
         v_year := TO_NUMBER(TO_CHAR(v_crime_date, 'YYYY'));
@@ -204,9 +197,8 @@ BEGIN
         v_day := TO_NUMBER(TO_CHAR(v_crime_date, 'DD'));
         
         ----------------------------------------------------------
-        -- 6. INSERT/GET SURROGATE KEYS
+        -- INSERT/GET SURROGATE KEYS
         ----------------------------------------------------------
-        -- DIM_DATE (use MERGE to avoid duplicates)
         MERGE INTO DIM_DATE d
         USING (SELECT v_date_key AS date_key, v_crime_date AS full_date, v_year AS year, v_month AS month, v_quarter AS quarter, v_day AS day FROM dual) s
         ON (d.date_key = s.date_key)
@@ -280,4 +272,5 @@ BEGIN
     COMMIT;
     DBMS_OUTPUT.PUT_LINE('Loading to Star Schema Completed Successfully.');
 END;
+
 /
