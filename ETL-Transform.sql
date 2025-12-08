@@ -33,26 +33,19 @@ BEGIN
 
     FOR r IN c_good LOOP
         
-        ----------------------------------------------------------
-        -- 1. CLEAN POSTCODE (uppercase + trimmed)
-        ----------------------------------------------------------
+        -- 1. CLEAN POSTCODE 
         v_postcode := UPPER(TRIM(r.postcode));
-        ----------------------------------------------------------
-        -- 2. CLEAN CRIME TYPE (Initcap + trimmed)
-        ----------------------------------------------------------
+        
+        -- 2. CLEAN CRIME TYPE 
         v_crime_type := INITCAP(TRIM(r.crime_type));
-        ----------------------------------------------------------
         -- 3. GENERATE DATE_KEY (YYYYMMDD)
-        ----------------------------------------------------------
         IF r.crime_date IS NOT NULL THEN
             v_date_key := TO_NUMBER(TO_CHAR(r.crime_date, 'YYYYMMDD'));
         ELSE
             v_date_key := NULL;
         END IF;
 
-        ----------------------------------------------------------
         -- 4. DATE COMPONENTS (DIM_DATE VALUES)
-        ----------------------------------------------------------
         IF r.crime_date IS NOT NULL THEN
             v_year    := TO_NUMBER(TO_CHAR(r.crime_date, 'YYYY'));
             v_month   := TO_NUMBER(TO_CHAR(r.crime_date, 'MM'));
@@ -60,35 +53,27 @@ BEGIN
             v_day     := TO_NUMBER(TO_CHAR(r.crime_date, 'DD'));
         END IF;
 
-        ----------------------------------------------------------
         -- 5. SET LOCATION NAME (Postcode used as location granularity)
-        ----------------------------------------------------------
         v_location_name := v_postcode;
 
-        ----------------------------------------------------------
-        -- 6. CLEAN POLICE STATION NAME (if exists)
-        ----------------------------------------------------------
+        -- 6. CLEAN POLICE STATION NAME 
         IF r.station_id IS NOT NULL THEN
             v_ps_name := INITCAP(TRIM(r.station_id)); 
         END IF;
 
-        ----------------------------------------------------------
-        -- 7. FUTURE STEP: LOOKUP/INSERT SURROGATE KEYS
-        -- (Not executed here – only placeholders)
-        ----------------------------------------------------------
+        -- 7. FUTURE STEP: LOOKUP/INSERT SURROGATE KEYS(only placeholders)
+        
         v_location_key := NULL;
         v_crime_type_key := NULL;
         v_ps_key := NULL;
 
-        ----------------------------------------------------------
         -- 8. FACT TABLE PREP
-        ----------------------------------------------------------
         v_fact_key := NULL;  -- to be generated later from FACT_CRIME_SEQ
         v_crime_count := 1; 
 
-        ----------------------------------------------------------
+        
         -- OUTPUT FOR DEBUG
-        ----------------------------------------------------------
+        
         DBMS_OUTPUT.PUT_LINE('Record ID: ' || r.merged_id);
         DBMS_OUTPUT.PUT_LINE('  Clean Postcode      = ' || v_postcode);
         DBMS_OUTPUT.PUT_LINE('  Clean Crime Type    = ' || v_crime_type);
@@ -102,3 +87,4 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('Step 5 Completed Successfully.');
 END;
 /
+
