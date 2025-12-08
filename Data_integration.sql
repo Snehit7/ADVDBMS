@@ -1,12 +1,11 @@
---------------------------------------------------------------
--- DATA INTEGRATION SCRIPT (Task 3.1)
--- Merge PRCS + PS_WALES + CRIME_LEEDS into STG_CRIME
---------------------------------------------------------------
+----------------------------
+-- DATA INTEGRATION SCRIPT 
+-----------------------------
 
 SET SERVEROUTPUT ON;
 
 --------------------------------------------------------------
--- 1. Drop table if already exists
+-- Drop table if already exists
 --------------------------------------------------------------
 BEGIN
     EXECUTE IMMEDIATE 'DROP TABLE STG_CRIME CASCADE CONSTRAINTS';
@@ -19,7 +18,7 @@ END;
 
 
 --------------------------------------------------------------
--- 2. Create STG_CRIME unified table
+-- Create STG_CRIME unified table
 --------------------------------------------------------------
 CREATE TABLE STG_CRIME (
     MERGED_ID        NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -39,7 +38,7 @@ CREATE TABLE STG_CRIME (
 );
 
 --------------------------------------------------------------
--- 3. Merge PRCS (PL_REPORTED_CRIME)
+--  Merge PRCS (PL_REPORTED_CRIME)
 --------------------------------------------------------------
 
 DECLARE
@@ -67,10 +66,9 @@ END;
 /
 
 
---------------------------------------------------------------
--- 4. Merge PS_WALES (Only if table exists & has data)
--- We will attempt safe SELECT
---------------------------------------------------------------
+---------------------
+-- Merge PS_WALES 
+----------------------
 
 DECLARE
     v_count NUMBER := 0;
@@ -100,9 +98,9 @@ END;
 /
 
 
---------------------------------------------------------------
--- 5. Merge Crime_Leeds (aggregate dataset)
---------------------------------------------------------------
+--------------------------------------------
+-- Merge Crime_Leeds (aggregate dataset)
+--------------------------------------------
 
 DECLARE
     CURSOR c_leds IS
@@ -126,7 +124,7 @@ END;
 
 
 --------------------------------------------------------------
--- 6. Summary Row Count
+--  Summary Row Count
 --------------------------------------------------------------
 DECLARE 
     v_total NUMBER;
@@ -140,3 +138,4 @@ END;
 
 
 COMMIT;
+
